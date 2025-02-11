@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phone Book</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      display: none; /* Hide the table by default */
+    }
+    table, th, td {
+      border: 1px solid black;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>Phone Book</h1>
+  
+  <!-- Add Contact Form -->
+  <h3>Add Contact</h3>
+  <form id="contactForm">
+    <label for="first_name">First Name:</label>
+    <input type="text" id="first_name" required><br>
+    
+    <label for="last_name">Last Name:</label>
+    <input type="text" id="last_name" required><br>
+
+    <label for="phone_number">Phone Number:</label>
+    <input type="text" id="phone_number" required><br>
+
+    <label for="address">Address:</label>
+    <input type="text" id="address" required><br>
+
+    <button type="submit">Add Contact</button>
+  </form>
+
+  <!-- Search Contact Form -->
+  <h3>Search Contact</h3>
+  <form id="searchForm">
+    <label for="searchQuery">Search by Name, Phone Number, or Address:</label>
+    <input type="text" id="searchQuery" required>
+    <button type="submit">Search</button>
+  </form>
+
+  <!-- Get 10 Contacts Button -->
+  <h3>Get 10 Contacts</h3>
+  <button onclick="fetchContacts()">Get 10 Contacts</button>
+
+  <!-- Contacts Table -->
+  <h3>Contacts</h3>
+  <table id="contactTable">
+    <thead>
+      <tr>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Phone Number</th>
+        <th>Address</th>
+        <th>Action</th> <!-- Added column for actions (delete) -->
+      </tr>
+    </thead>
+    <tbody id="contactList"></tbody>
+  </table>
+
+  <script>
+    const apiUrl = 'http://localhost:8080/contacts'; // Change if using a different port
+    
+    // Add a new contact
+    document.getElementById('contactForm').addEventListener('submit', function(event) {
+      event.preventDefault();  // Prevent default form submission
+
+      const contactData = {
+        first_name: document.getElementById('first_name').value,
+        last_name: document.getElementById('last_name').value,
+        phone_number: document.getElementById('phone_number').value,
+        address: document.getElementById('address').value
+      };
+
+      fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(contactData)  // Send contact data as JSON
+      })
+      .then(response => response.json())
+      .then(data => {
+        alert(data.message);  // Show success message
+      })
+      .catch(error => console.error('Error:', error));  // Log any errors
+    });
+
+    // Fetch and display contacts from the API when the "Get 10 Contacts" button is clicked
+    function fetchContacts() {
+      fetch(apiUrl + '?page=1')  // Send a request to get the first page (10 contacts)
+        .then(response => response.json())
+        .then(data => {
+          const contactList = document.getElementById('contactList');
+          contactList.innerHTML = '';  // Clear existing contacts
+
+          // Loop through the contacts and display them in the table
+          data.forEach(contact => {
+            const row = document.createElement('tr');
+            
+            const firstNameCell = document.createElement('td');
+            firstNameCell.textContent = contact.first_name;
+            row.appendChild(firstNameCell);
+
+            const lastNameCell = document.createElement('td');
+            lastNameCell.textContent = contact.last_name;
+            row.appendChild(lastNameCell);
+
+            const phoneNumberCell = document.createElement('td');
+            phoneNumberCell.textContent = contact.phone_number;
+            row.appendChild(phoneNumberCell);
+
+            const addressCell = document.createElement('td');
+            addressCell.textContent = contact.address;
+            row.appendChild(addressCell);
+
+            // Add Delete Button in the last column
+            const actionCell = document.createElement('td');
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.onclick = function() {
+              deleteContact(contact.phone_number, row);  // Pass phone number and row to delete
+            };
+            actionCell.appendChild(deleteButton);
+            row.appendChild(actionCell);
+
+            contactList.appendChild(row);
+          });
+
+          // Show the table after fetching contacts
+          document.getElementById('contactTable').style.display = 'table';
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Delete contact
+    function deleteContact(phoneNumber, row) {
+      fetch(apiUrl + '?phone=' + phoneNumber, {
+        method: 'DELETE',  // Use DELETE request to remove the contact
+      })
+      .then(response => response.json())
+      .then(data => {
+        alert(data.message);  // Show success message
+        row.remove();  // Remove the deleted contact from the table
+      })
+      .catch(error => console.error('Error:', error));  // Log any errors
+    }
+
+    // Search contacts by name, phone number, or address
+    document.getElementById('searchForm').addEventListener('submit', function(event) {
+      event.preventDefault();  // Prevent default form submission
+
+      const searchQuery = document.getElementById('searchQuery').value;
+      fetch(apiUrl + '/search?query=' + searchQuery)  // Send a request to search contacts
+        .then(response => response.json())
+        .then(data => {
+          const contactList = document.getElementById('contactList');
+          contactList.innerHTML = '';  // Clear existing contacts
+
+          // Loop through the search results and display them in the table
+          data.forEach(contact => {
+            const row = document.createElement('tr');
+            
+            const firstNameCell = document.createElement('td');
+            firstNameCell.textContent = contact.first_name;
+            row.appendChild(firstNameCell);
+
+            const lastNameCell = document.createElement('td');
+            lastNameCell.textContent = contact.last_name;
+            row.appendChild(lastNameCell);
+
+            const phoneNumberCell = document.createElement('td');
+            phoneNumberCell.textContent = contact.phone_number;
+            row.appendChild(phoneNumberCell);
+
+            const addressCell = document.createElement('td');
+            addressCell.textContent = contact.address;
+            row.appendChild(addressCell);
+
+            // Add Delete Button in the last column
+            const actionCell = document.createElement('td');
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.onclick = function() {
+              deleteContact(contact.phone_number, row);  // Pass phone number and row to delete
+            };
+            actionCell.appendChild(deleteButton);
+            row.appendChild(actionCell);
+
+            contactList.appendChild(row);
+          });
+
+          // Show the table after fetching contacts
+          document.getElementById('contactTable').style.display = 'table';
+        })
+        .catch(error => console.error('Error:', error));
+    });
+  </script>
+</body>
+</html>
