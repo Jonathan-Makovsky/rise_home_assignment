@@ -1,0 +1,35 @@
+version: '3.7'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=db
+      - DB_USER=sa
+      - DB_PASSWORD="Yonatan1234$"
+      - DB_NAME=contactsdb
+    depends_on:
+      - db
+    networks:
+      - backend
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD="Yonatan1234$"
+      - SQLSERVER_ENCRYPT=0  # Disable SSL encryption
+    ports:
+      - "1433:1433"
+    networks:
+      - backend
+    volumes:
+      - db_data:/var/opt/mssql
+
+networks:
+  backend:
+
+volumes:
+  db_data:
