@@ -1,35 +1,35 @@
-version: '3.7'
+# docker-compose.yml
+version: '3.8'
 
 services:
   app:
     build: .
     ports:
       - "8080:8080"
-    environment:
-      - DB_HOST=db
-      - DB_USER=sa
-      - DB_PASSWORD="Yonatan1234$"
-      - DB_NAME=contactsdb
     depends_on:
       - db
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/phonebook?sslmode=disable
     networks:
-      - backend
+      - phonebook-network
 
   db:
-    image: mcr.microsoft.com/mssql/server:2019-latest
+    image: postgres:15-alpine
     environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD="Yonatan1234$"
-      - SQLSERVER_ENCRYPT=0  # Disable SSL encryption
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=phonebook
     ports:
-      - "1433:1433"
-    networks:
-      - backend
+      - "5432:5432"
     volumes:
-      - db_data:/var/opt/mssql
-
-networks:
-  backend:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - phonebook-network
 
 volumes:
-  db_data:
+  postgres-data:
+
+networks:
+  phonebook-network:
+    driver: bridge
